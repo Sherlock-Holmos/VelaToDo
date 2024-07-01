@@ -1,0 +1,107 @@
+<template>
+    <div class="demo-page">
+      <text class="title">待办事项</text>
+      <!-- 添加任务按钮 -->
+      <input class="btn-add" type="button" value="添加任务" onclick="routeToAddTask" />
+  
+      <!-- 待办任务列表 -->
+      <list class="task-list">
+        <list-item type="normal" for="{{tasks}}" class="task-item">
+          <text class="task-title">{{item.title}}</text>
+          <input class="btn-delete" type="button" value="删除" onclick="deleteTask" data-id="{{item.id}}" />
+        </list-item>
+      </list>
+    </div>
+  </template>
+  
+  <script>
+  import router from '@system.router'
+  import storage from '@system.storage'
+  
+  export default {
+    private: {
+      title: '待办事项',
+      tasks: []
+    },
+    onInit() {
+      this.loadTasks()
+    },
+    loadTasks() {
+      storage.get({
+        key: 'tasks',
+        success: (data) => {
+          if (data) {
+            this.tasks = JSON.parse(data)
+          }
+        }
+      })
+    },
+    routeToAddTask() {
+      router.push({
+        uri: '/pages/addTask'
+      })
+    },
+    deleteTask(event) {
+      const taskId = event.target.attr['data-id']
+      this.tasks = this.tasks.filter(task => task.id !== taskId)
+      storage.set({
+        key: 'tasks',
+        value: JSON.stringify(this.tasks)
+      })
+    }
+  }
+  </script>
+  
+  <style>
+  .demo-page {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+  }
+  
+  .title {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  
+  .btn-add {
+    width: 200px;
+    height: 40px;
+    border-radius: 5px;
+    background-color: #09ba07;
+    font-size: 20px;
+    color: #ffffff;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .task-list {
+    width: 100%;
+  }
+  
+  .task-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .task-title {
+    font-size: 18px;
+  }
+  
+  .btn-delete {
+    width: 60px;
+    height: 30px;
+    border-radius: 5px;
+    background-color: #e74c3c;
+    font-size: 14px;
+    color: #ffffff;
+    text-align: center;
+  }
+  </style>
+  
