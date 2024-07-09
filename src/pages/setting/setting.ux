@@ -1,0 +1,246 @@
+<template>
+  <div class="demo-page">
+    <text class="title" @swipe="toPage">{{ title }}</text>
+    <div class="button-row">
+      <input type="button" class="init-button" @click="initResourcesAll" value="初始化"></input>
+      <input type="button" class="init-button" @click="recovery" value="覆盖"></input>
+    </div>
+    <div class="button-row">
+      <input type="button" class="init-button" @click="readAll" value="读取"></input>
+      <input type="button" class="init-button" @click="connect" value="连接"></input>      
+    </div>
+    <text class="status">{{ connectStatus }}</text> <!-- 新增的连接状态显示 -->
+  </div>
+</template>
+
+<script>
+import router from '@system.router';
+import file from '@system.file';
+import interconnect from '@system.interconnect';
+
+const dstURI1 = 'internal://files/res/ToDo.txt';
+const resURI1 = '/common/File/ToDo.txt';
+const dstURI2 = 'internal://files/res/jie.txt';
+const resURI2 = '/common/File/jie.txt';
+const dstURI3 = 'internal://files/res/gui.txt';
+const resURI3 = '/common/File/gui.txt';
+const dstURI4 = 'internal://files/res/quotationFile.txt';
+const resURI4 = '/common/File/quotationFile.txt';
+
+export default {
+  private: {
+    title: '设置',
+    infor1: '',
+    infor2: '',
+    infor3: '',
+    infor4: '',
+    connectStatus: '未连接', // 新增的连接状态字段
+  },
+
+  toPage(event) {
+    if (event.direction === 'right') {
+      // Handle right swipe
+    } else if (event.direction === 'left') {
+      // Handle left swipe
+    } else if (event.direction === 'up') {
+      router.push({
+        uri: '/pages/home'
+      });
+    }
+  },
+
+  initResources(dstURI, resURI, infor) {
+    // 列出文件
+    file.list({
+      uri: 'internal://files/',
+      success: function(data) {
+        console.log(data.fileList);
+      },
+      fail: function(data, code) {
+        console.log(`handling fail, code = ${code}`);
+      }
+    });
+    console.log('检查路径');
+
+    // 检查路径是否存在
+    file.access({
+      uri: dstURI,
+      success: function(data) {
+        console.log('目标路径已存在');
+      },
+      fail: function(data, code) {
+        if (code === 301) {
+          console.log('路径不存在，创建路径');
+          // 创建目录
+          file.mkdir({
+            uri: 'internal://files/res',
+            recursive: true,
+            success: function(data) {
+              console.log('目录创建成功');
+              // 创建文件
+              file.writeText({
+                uri: dstURI,
+                text: '',
+                success: function() {
+                  console.log('文件创建成功');
+                  //复制文件内容
+                  file.readText({
+                    uri: resURI,
+                    success: (data) => {
+                      if (data.text) {
+                        infor = data.text;
+                        console.log('取得数据:' + infor);
+                        file.writeText({
+                          uri: dstURI,
+                          text: infor,
+                          success: function() {
+                            console.log('复制成功' + dstURI);
+                          },
+                          fail: function(data, code) {
+                            console.log(`复制失败, code = ${code}`);
+                          }
+                        });
+                      }
+                    },
+                    fail: (data, code) => {
+                      console.error(`读取失败: ${code}`);
+                    }
+                  });
+                },
+                fail: function(data, code) {
+                  console.log(`文件创建失败，code = ${code}`);
+                }
+              });
+            },
+            fail: function(data, code) {
+              console.log(`目录创建失败，code = ${code}`);
+            }
+          });
+        } else {
+          console.log(`handling fail, code = ${code}`);
+        }
+      }
+    });
+  },
+
+  initResourcesAll() {
+    this.initResources(dstURI1, resURI1, this.infor1);
+    this.initResources(dstURI2, resURI2, this.infor2);
+    this.initResources(dstURI3, resURI3, this.infor3);
+    this.initResources(dstURI4, resURI4, this.infor4);
+  },
+
+  read(dstURI) {
+    file.readText({
+      uri: dstURI,
+      success: function(data) {
+        console.log(dstURI + data.text);
+      },
+      fail: function(data, code) {
+        console.log(`handling fail, code = ${code}`);
+      }
+    });
+  },
+
+  readAll() {
+    this.read(dstURI1);
+    this.read(dstURI2);
+    this.read(dstURI3);
+    this.read(dstURI4);
+  },
+
+  cpy(dstURI, resURI, infor) {
+    //复制文件内容
+    file.readText({
+      uri: resURI,
+      success: (data) => {
+        if (data.text) {
+          infor = data.text;
+          console.log('取得数据:' + infor);
+          file.writeText({
+            uri: dstURI,
+            text: infor,
+            success: function() {
+              console.log('复制成功' + dstURI);
+            },
+            fail: function(data, code) {
+              console.log(`复制失败, code = ${code}`);
+            }
+          });
+        }
+      },
+      fail: (data, code) => {
+        console.error(`读取失败: ${code}`);
+      }
+    });
+  },
+
+  recovery() {
+    this.cpy(dstURI1, resURI1, this.infor1);
+    this.cpy(dstURI2, resURI2, this.infor2);
+    this.cpy(dstURI3, resURI3, this.infor3);
+    this.cpy(dstURI4, resURI4, this.infor4);
+  },
+
+  connect() {
+    let conn = interconnect.instance();
+    conn.getReadyState({
+      success: data => {
+        console.log('getReadyState success, status = ' + data.status);
+        if (data.status === 1) {
+          this.connectStatus = '连接成功'; // 更新连接状态
+        } else if (data.status === 2) {
+          this.connectStatus = '连接断开'; // 更新连接状态
+        }
+      },
+      fail: (data, code) => {
+        console.log('getReadyState fail, code = ' + code);
+        this.connectStatus = '连接检查失败'; // 更新连接状态
+      }
+    });
+  }
+};
+</script>
+
+<style>
+.demo-page {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.title {
+  bottom: 0;
+  font-size: 48px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.button-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+  padding: 20px 0;
+}
+
+.init-button {
+  width: 200px;
+  height: 100px;
+  background-color: #5d6064;
+  color: white;
+  text-align: center;
+  line-height: 100px;
+  font-size: 48px;
+  border-radius: 16px;
+  margin: 0 10px; /* Adds space between the buttons */
+}
+
+.status {
+  font-size: 36px;
+  margin-top: 20px;
+  text-align: center;
+  color: #ff0000;
+}
+</style>

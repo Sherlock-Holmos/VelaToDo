@@ -1,0 +1,157 @@
+<template>
+  <div class="demo-page">
+    <text class="title" @swipe="toPage">{{ title }}</text>
+
+    <swiper class="swiper" indicator="false">
+    <!-- 显示戒的列表 -->
+    <div class="list-container">
+      <text class="list-title">{{title1}}</text>
+      <list class="list">
+        <list-item for={{jieList}} class="list-item" type="item" @click="showTargetDetail">
+          <text class="events">{{ $item.title }}</text>
+        </list-item>
+      </list>
+    </div>
+
+    <!-- 显示规的列表 -->
+    <div class="list-container">
+      <text class="list-title">{{title2}}</text>
+      <list class="list">
+        <list-item for={{guiList}} class="list-item" type="item" @click="showTargetDetail">
+          <text class="events">{{ $item.title }}</text>
+        </list-item>
+      </list>
+    </div>
+    </swiper>
+
+
+  </div>
+</template>
+
+<script>
+import router from '@system.router'
+import file from '@system.file'
+
+const JIE = 'internal://files/res/jie.txt'
+const GUI = 'internal://files/res/gui.txt'
+
+export default {
+  private: {
+    title: '戒规',
+    title1: '戒',
+    title2: '规',
+    jieList: [],
+    guiList: [],
+  },
+
+  onInit() {
+    // 加载戒和规的数据
+    this.loadData(JIE, 'jieList')
+    this.loadData(GUI, 'guiList')
+  },
+
+  loadData(fileUri, listName) {
+    file.readText({
+      uri: fileUri,
+      success: (data) => {
+        // 解析数据
+        const items = data.text.split('\n').map(line => {
+          const [title, time, date] = line.split(',')
+          return { title, time, date }
+        })
+        this[listName] = items
+      },
+      fail: (data, code) => {
+        console.error(`加载数据失败, 错误代码: ${code}`)
+      }
+    })
+  },
+
+  toPage(event) {
+    if(event.direction == 'right') {
+      router.push({
+        uri: '/pages/home'
+      });
+    } else if(event.direction == 'left') {
+      // 其他页面跳转逻辑
+    } else if(event.direction == 'down') {
+      // 其他页面跳转逻辑
+    }
+  },
+  showTargetDetail(){
+    router.push({
+      uri: '/pages/targetDetail'
+    });
+  }
+}
+</script>
+
+<style>
+.demo-page {
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+}
+
+.title {
+  font-size: 48px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.list-title {
+  font-size: 48px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  margin-left: 0;
+  margin-right: 15px;
+}
+
+.events{
+  font-size: 48px;
+}
+
+.list{
+  width: 100%;
+  height: 95%;
+  border: 3px solid #ccc;
+  align-items: center;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  border-radius: 30px;
+  padding: 10px;;
+}
+
+.list-item{
+  height:138px;
+  width: 95%;
+  align-items: center;
+  justify-content: center;
+  background-color: #3d3d3d;
+  border-radius: 36px;
+  margin-left: 10px;
+  margin-right: 10px;
+  margin-top: 10px;
+  margin-bottom: 10px; /* 添加下边距使任务之间有间隔 */
+  padding: 10px; /* 添加填充使内容与边界有间隔 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 添加阴影效果 */
+  font-size: 28px;
+  padding: 8px 0;
+}
+
+.list-container{
+  height:100%;
+  border-radius: 24px;
+  border: 0 solid #ccc;
+  width: 100%;
+  margin-top: 16px;
+  padding: 16px;
+}
+
+.swiper {
+    width: 100%;
+    height: 88%;
+    border:0;
+  }
+</style>

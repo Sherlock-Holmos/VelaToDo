@@ -1,107 +1,212 @@
 <template>
-    <div class="demo-page">
-      <text class="title">待办事项</text>
-      <!-- 添加任务按钮 -->
-      <input class="btn-add" type="button" value="添加任务" onclick="routeToAddTask" />
-  
-      <!-- 待办任务列表 -->
-      <list class="task-list">
-        <list-item type="normal" for="{{tasks}}" class="task-item">
-          <text class="task-title">{{item.title}}</text>
-          <input class="btn-delete" type="button" value="删除" onclick="deleteTask" data-id="{{item.id}}" />
-        </list-item>
-      </list>
+  <div class="demo-page">
+    <div class="head" @swipe="toPage">
+    <text class="title" @click="toSetting">{{title}}</text>
+    <marquee class="marquee" id="marquee" scrollamount={{81}} loop={{-1}}>
+      {{randomQuotation}}
+    </marquee>      
     </div>
-  </template>
-  
-  <script>
-  import router from '@system.router'
-  import storage from '@system.storage'
-  
-  export default {
-    private: {
-      title: '待办事项',
-      tasks: []
-    },
-    onInit() {
-      this.loadTasks()
-    },
-    loadTasks() {
-      storage.get({
-        key: 'tasks',
-        success: (data) => {
-          if (data) {
-            this.tasks = JSON.parse(data)
-          }
+    <list class="list" @swipe="exitHome">
+    <list-item for="{{tasks}}" class="item" type="item" @click="showTaskDetail($item.id)">
+      <text class="task-title">{{$item.title}}</text>
+    </list-item>
+  </list>
+  </div>
+</template>
+
+<script>
+import router from '@system.router'
+import file from '@system.file'
+
+const TASKS_FILE_URI = 'internal://files/res/ToDo.txt'
+const QUOTATIONS_FILE_URI = 'internal://files/res/quotationFile.txt'
+
+export default {
+  private: {
+    title: '待办',
+    tasks: [],
+    quotations: [],
+    randomQuotation:''
+  },
+
+  onInit() {
+    this.loadTasks()
+    this.loadQuotations()
+  },
+  loadTasks() {
+    file.readText({
+      uri: TASKS_FILE_URI,
+      success: (data) => {
+        if (data.text) {
+          this.tasks = this.parseTasks(data.text)
         }
-      })
-    },
-    routeToAddTask() {
+      },
+      fail: (data, code) => {
+        console.error(`Failed to load tasks: ${code}`)
+      }
+    })
+  },
+  deleteTask(event) {
+    const taskId = event.target.attr['data-id']
+    this.tasks = this.tasks.filter(task => task.id !== taskId)
+    this.saveTasks()
+  },
+  parseTasks(tasksText) {
+    const tasks = tasksText.trim().split('\n').map((line, index) => {
+      const [title, completedStr, dueDate, priority] = line.split(',')
+      const completed = completedStr.trim() === 'true'
+      return { id: index.toString(), title, completed, dueDate: dueDate || '未设置', priority: priority || '未设置' }
+    })
+    return tasks.filter(task => !task.completed)
+  },
+  exitHome(event)  {
+    if(event.direction == 'right'){
+      this.$app.exit();
+    }
+  },
+  loadQuotations() {
+    file.readText({
+      uri: QUOTATIONS_FILE_URI,
+      success: (data) => {
+        if (data.text) {
+          this.quotations = this.parseQuotations(data.text)
+          this.getRandomQuotation()
+        }
+      },
+      fail: (data, code) => {
+        console.error(`Failed to load quotations: ${code}`)
+      }
+    })
+  },
+  parseQuotations(quotationtxt) {
+    const quotations = quotationtxt.trim().split('\n').map((line, index) => {
+      const [quotation, author] = line.split(',')
+      return { id: index.toString(), quotation, author }
+    })
+    return quotations
+  },
+  getRandomQuotation() {
+    if (this.quotations.length === 0) {
+      return ''
+    }
+    const randomIndex = Math.floor(Math.random() * this.quotations.length)
+    const selectedQuotation = this.quotations[randomIndex]
+    this.randomQuotation =  `${selectedQuotation.quotation} - ${selectedQuotation.author}`
+  },
+  toPage(event) {
+    if(event.direction == 'right'){
       router.push({
-        uri: '/pages/addTask'
+        uri:'/pages/analyse'
       })
-    },
-    deleteTask(event) {
-      const taskId = event.target.attr['data-id']
-      this.tasks = this.tasks.filter(task => task.id !== taskId)
-      storage.set({
-        key: 'tasks',
-        value: JSON.stringify(this.tasks)
+    }else if(event.direction == 'left'){
+      router.push({
+        uri:'/pages/target'
       })
     }
+  },
+  showTaskDetail(taskId) {
+    router.push({
+      uri: 'pages/detail',
+      params: {
+        taskId: taskId
+      }
+    });
+  },
+  toSetting(){
+    router.push({
+      uri: 'pages/setting'   
+    })
   }
-  </script>
-  
-  <style>
-  .demo-page {
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 16px;
-  }
-  
-  .title {
-    font-size: 24px;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 16px;
-  }
-  
-  .btn-add {
-    width: 200px;
-    height: 40px;
-    border-radius: 5px;
-    background-color: #09ba07;
-    font-size: 20px;
-    color: #ffffff;
-    text-align: center;
-    margin-bottom: 20px;
-  }
-  
-  .task-list {
+}
+</script>
+
+<style>
+.demo-page {
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+}
+
+.head{
+  flex-direction: column;
+  align-items: center; 
+}
+
+.title {
+  font-size: 48px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.pic-btn{
+  margin-left: auto;
+}
+
+.btn-add {
+  width: 200px;
+  height: 40px;
+  border-radius: 5px;
+  background-color: #09ba07;
+  font-size: 20px;
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.task-list {
+  width: 100%;
+}
+
+.task-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.task-title {
+  font-size: 54px;
+  text-align: center;
+  lines: 1;
+  text-overflow: ellipsis;
+}
+
+.btn-delete {
+  width: 445px; /* 调整按钮宽度 */
+  height: 120%;
+  border-radius: 24px;
+  background-color: #5d5959;
+  font-size: 18px;
+  color: #ffffff;
+  text-align: center;
+  line-height: 137px; /* 与 list-item 的高度相同 */
+  position: absolute;
+  right:-445px;
+  transition: right 0.3s ease; /* 添加动画效果 */
+}
+
+.item {
+  height:151px;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  background-color: #3d3d3d;
+  border-radius: 42px;
+  margin-bottom: 10px; /* 添加下边距使任务之间有间隔 */
+  padding: 10px; /* 添加填充使内容与边界有间隔 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 添加阴影效果 */
+}
+
+
+  .list {
     width: 100%;
+    height: 74%;
+    border: 0;
   }
-  
-  .task-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    border-bottom: 1px solid #e0e0e0;
-  }
-  
-  .task-title {
-    font-size: 18px;
-  }
-  
-  .btn-delete {
-    width: 60px;
-    height: 30px;
-    border-radius: 5px;
-    background-color: #e74c3c;
-    font-size: 14px;
-    color: #ffffff;
-    text-align: center;
-  }
-  </style>
-  
+
+.marquee {
+  margin-bottom: 34px;
+}
+</style>

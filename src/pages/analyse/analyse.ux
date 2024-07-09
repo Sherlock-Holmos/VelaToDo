@@ -1,0 +1,44 @@
+<template>
+    <div class="demo-page">
+      <text class="title" @swipe="toPage">{{ title }}</text>
+    </div>
+  </template>
+  
+  <script>
+  import router from '@system.router'
+  import file from '@system.file'
+
+  export default {
+    private: {
+      title: '习惯分析'
+    },
+
+    toPage(event){
+        if(event.direction == 'right'){
+
+      }else if(event.direction == 'left'){
+        router.push({
+          uri:'/pages/home'
+        })
+      }else if(event.direction == 'down'){
+        
+      }
+    }
+  }
+  </script>
+  
+  <style>
+  .demo-page {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .title {
+  font-size: 48px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 16px;
+}
+  </style>
+  
