@@ -3,51 +3,49 @@
     <text class="title" @swipe="toPage">{{ title }}</text>
 
     <swiper class="swiper" indicator="false">
-    <!-- 显示戒的列表 -->
-    <div class="list-container">
-      <text class="list-title">{{title1}}</text>
-      <list class="list">
-        <list-item for={{jieList}} class="list-item" type="item" @click="showTargetDetail">
-          <text class="events">{{ $item.title }}</text>
-        </list-item>
-      </list>
-    </div>
+      <!-- 显示戒的列表 -->
+      <div class="list-container">
+        <text class="list-title">{{ title1 }}</text>
+        <list class="list">
+          <list-item for="{{jieList}}" class="list-item" type="item" @click="showTargetDetail">
+            <text class="events">{{ $item.title }}</text>
+          </list-item>
+        </list>
+      </div>
 
-    <!-- 显示规的列表 -->
-    <div class="list-container">
-      <text class="list-title">{{title2}}</text>
-      <list class="list">
-        <list-item for={{guiList}} class="list-item" type="item" @click="showTargetDetail">
-          <text class="events">{{ $item.title }}</text>
-        </list-item>
-      </list>
-    </div>
+      <!-- 显示规的列表 -->
+      <div class="list-container">
+        <text class="list-title">{{ title2 }}</text>
+        <list class="list">
+          <list-item for="{{guiList}}" class="list-item" type="item" @click="showTargetDetail">
+            <text class="events">{{ $item.title }}</text>
+          </list-item>
+        </list>
+      </div>
     </swiper>
-
-
   </div>
 </template>
 
 <script>
-import router from '@system.router'
-import file from '@system.file'
+import router from "@system.router"
+import file from "@system.file"
 
-const JIE = 'internal://files/res/jie.txt'
-const GUI = 'internal://files/res/gui.txt'
+const JIE = "internal://files/res/jie.txt"
+const GUI = "internal://files/res/gui.txt"
 
 export default {
   private: {
-    title: '戒规',
-    title1: '戒',
-    title2: '规',
+    title: "戒规",
+    title1: "戒",
+    title2: "规",
     jieList: [],
-    guiList: [],
+    guiList: []
   },
 
   onInit() {
     // 加载戒和规的数据
-    this.loadData(JIE, 'jieList')
-    this.loadData(GUI, 'guiList')
+    this.loadData(JIE, "jieList")
+    this.loadData(GUI, "guiList")
   },
 
   loadData(fileUri, listName) {
@@ -55,9 +53,9 @@ export default {
       uri: fileUri,
       success: (data) => {
         // 解析数据
-        const items = data.text.split('\n').map(line => {
-          const [title, time, date] = line.split(',')
-          return { title, time, date }
+        const items = data.text.split("\n").map((line) => {
+          const [title, time, date] = line.split(",")
+          return {title, time, date}
         })
         this[listName] = items
       },
@@ -68,20 +66,20 @@ export default {
   },
 
   toPage(event) {
-    if(event.direction == 'right') {
+    if (event.direction == "right") {
       router.push({
-        uri: '/pages/home'
-      });
-    } else if(event.direction == 'left') {
+        uri: "/pages/home"
+      })
+    } else if (event.direction == "left") {
       // 其他页面跳转逻辑
-    } else if(event.direction == 'down') {
+    } else if (event.direction == "down") {
       // 其他页面跳转逻辑
     }
   },
-  showTargetDetail(){
+  showTargetDetail() {
     router.push({
-      uri: '/pages/targetDetail'
-    });
+      uri: "/pages/targetDetail"
+    })
   }
 }
 </script>
@@ -108,11 +106,11 @@ export default {
   margin-right: 15px;
 }
 
-.events{
+.events {
   font-size: 48px;
 }
 
-.list{
+.list {
   width: 100%;
   height: 95%;
   border: 3px solid #ccc;
@@ -120,11 +118,11 @@ export default {
   margin-top: 10px;
   margin-bottom: 10px;
   border-radius: 30px;
-  padding: 10px;;
+  padding: 10px;
 }
 
-.list-item{
-  height:138px;
+.list-item {
+  height: 138px;
   width: 95%;
   align-items: center;
   justify-content: center;
@@ -133,15 +131,18 @@ export default {
   margin-left: 10px;
   margin-right: 10px;
   margin-top: 10px;
-  margin-bottom: 10px; /* 添加下边距使任务之间有间隔 */
-  padding: 10px; /* 添加填充使内容与边界有间隔 */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 添加阴影效果 */
+  margin-bottom: 10px;
+  /* 添加下边距使任务之间有间隔 */
+  padding: 10px;
+  /* 添加填充使内容与边界有间隔 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  /* 添加阴影效果 */
   font-size: 28px;
   padding: 8px 0;
 }
 
-.list-container{
-  height:100%;
+.list-container {
+  height: 100%;
   border-radius: 24px;
   border: 0 solid #ccc;
   width: 100%;
@@ -150,8 +151,8 @@ export default {
 }
 
 .swiper {
-    width: 100%;
-    height: 88%;
-    border:0;
-  }
+  width: 100%;
+  height: 88%;
+  border: 0;
+}
 </style>

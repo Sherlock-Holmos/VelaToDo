@@ -43,6 +43,9 @@
       },
       "pages/targetDetail":{
         "component": "targetDetail"
+      },
+      "pages/test":{
+        "component": "test"
       }
     }
   }

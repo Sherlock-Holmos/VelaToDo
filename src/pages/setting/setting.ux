@@ -1,15 +1,16 @@
 <template>
   <div class="demo-page">
-    <text class="title" @swipe="toPage">{{ title }}</text>
+    <text class="title" @swipe="toPage" @click="toTest">{{ title }}</text>
     <div class="button-row">
       <input type="button" class="init-button" @click="initResourcesAll" value="初始化"></input>
       <input type="button" class="init-button" @click="recovery" value="覆盖"></input>
     </div>
     <div class="button-row">
       <input type="button" class="init-button" @click="readAll" value="读取"></input>
-      <input type="button" class="init-button" @click="connect" value="连接"></input>      
+      <input type="button" class="init-button" @click="connect" value="连接"></input>
     </div>
     <text class="status">{{ connectStatus }}</text> <!-- 新增的连接状态显示 -->
+    <text class="status">{{ sendStatus }}</text> <!-- 新增的连接状态显示 -->
   </div>
 </template>
 
@@ -35,8 +36,23 @@ export default {
     infor3: '',
     infor4: '',
     connectStatus: '未连接', // 新增的连接状态字段
+    conn: null,
+    sendStatus:'未发送',
+    tasks: [],
   },
+  onReady() {
+    this.conn = interconnect.instance()
 
+    this.conn.onopen = (data) => {
+      console.log('连接打开')
+      this.connectStatus = '连接打开'
+    }
+
+    this.conn.onclose = (data) => {
+      console.log('连接关闭')
+      this.connectStatus = '连接关闭'
+    }
+  },
   toPage(event) {
     if (event.direction === 'right') {
       // Handle right swipe
@@ -48,7 +64,6 @@ export default {
       });
     }
   },
-
   initResources(dstURI, resURI, infor) {
     // 列出文件
     file.list({
@@ -122,14 +137,12 @@ export default {
       }
     });
   },
-
   initResourcesAll() {
     this.initResources(dstURI1, resURI1, this.infor1);
     this.initResources(dstURI2, resURI2, this.infor2);
     this.initResources(dstURI3, resURI3, this.infor3);
     this.initResources(dstURI4, resURI4, this.infor4);
   },
-
   read(dstURI) {
     file.readText({
       uri: dstURI,
@@ -141,14 +154,12 @@ export default {
       }
     });
   },
-
   readAll() {
     this.read(dstURI1);
     this.read(dstURI2);
     this.read(dstURI3);
     this.read(dstURI4);
   },
-
   cpy(dstURI, resURI, infor) {
     //复制文件内容
     file.readText({
@@ -174,30 +185,33 @@ export default {
       }
     });
   },
-
   recovery() {
     this.cpy(dstURI1, resURI1, this.infor1);
     this.cpy(dstURI2, resURI2, this.infor2);
     this.cpy(dstURI3, resURI3, this.infor3);
     this.cpy(dstURI4, resURI4, this.infor4);
   },
-
   connect() {
     let conn = interconnect.instance();
-    conn.getReadyState({
-      success: data => {
-        console.log('getReadyState success, status = ' + data.status);
-        if (data.status === 1) {
-          this.connectStatus = '连接成功'; // 更新连接状态
-        } else if (data.status === 2) {
-          this.connectStatus = '连接断开'; // 更新连接状态
-        }
+
+    console.log('接收tasks:' + this.tasks);
+
+    conn.send({
+      data: this.tasks,
+      success: ()=>{
+        console.log(`handling success`)
+        this.sendStatus = '发送成功'
       },
-      fail: (data, code) => {
-        console.log('getReadyState fail, code = ' + code);
-        this.connectStatus = '连接检查失败'; // 更新连接状态
+      fail: (data)=> {
+        console.log(`handling fail, errMsg = ${data.data}, errCode = ${data.code}`)
+        this.sendStatus = '发送失败'
       }
-    });
+    })
+  },
+  toTest(){
+    router.push({
+      uri: "pages/test"
+    })
   }
 };
 </script>
@@ -234,7 +248,8 @@ export default {
   line-height: 100px;
   font-size: 48px;
   border-radius: 16px;
-  margin: 0 10px; /* Adds space between the buttons */
+  margin: 0 10px;
+  /* Adds space between the buttons */
 }
 
 .status {

@@ -1,32 +1,32 @@
 <template>
   <div class="demo-page">
     <div class="head" @swipe="toPage">
-    <text class="title" @click="toSetting">{{title}}</text>
-    <marquee class="marquee" id="marquee" scrollamount={{81}} loop={{-1}}>
-      {{randomQuotation}}
-    </marquee>      
+      <text class="title" @click="toSetting">{{ title }}</text>
+      <marquee class="marquee" id="marquee" scrollamount="{{81}}" loop="{{-1}}">
+        {{ randomQuotation }}
+      </marquee>
     </div>
     <list class="list" @swipe="exitHome">
-    <list-item for="{{tasks}}" class="item" type="item" @click="showTaskDetail($item.id)">
-      <text class="task-title">{{$item.title}}</text>
-    </list-item>
-  </list>
+      <list-item for="{{tasks}}" class="item" type="item" @click="showTaskDetail($item.id)">
+        <text class="task-title">{{ $item.title }}</text>
+      </list-item>
+    </list>
   </div>
 </template>
 
 <script>
-import router from '@system.router'
-import file from '@system.file'
+import router from "@system.router"
+import file from "@system.file"
 
-const TASKS_FILE_URI = 'internal://files/res/ToDo.txt'
-const QUOTATIONS_FILE_URI = 'internal://files/res/quotationFile.txt'
+const TASKS_FILE_URI = "internal://files/res/ToDo.txt"
+const QUOTATIONS_FILE_URI = "internal://files/res/quotationFile.txt"
 
 export default {
   private: {
-    title: '待办',
+    title: "待办",
     tasks: [],
     quotations: [],
-    randomQuotation:''
+    randomQuotation: ""
   },
 
   onInit() {
@@ -47,21 +47,30 @@ export default {
     })
   },
   deleteTask(event) {
-    const taskId = event.target.attr['data-id']
-    this.tasks = this.tasks.filter(task => task.id !== taskId)
+    const taskId = event.target.attr["data-id"]
+    this.tasks = this.tasks.filter((task) => task.id !== taskId)
     this.saveTasks()
   },
   parseTasks(tasksText) {
-    const tasks = tasksText.trim().split('\n').map((line, index) => {
-      const [title, completedStr, dueDate, priority] = line.split(',')
-      const completed = completedStr.trim() === 'true'
-      return { id: index.toString(), title, completed, dueDate: dueDate || '未设置', priority: priority || '未设置' }
-    })
-    return tasks.filter(task => !task.completed)
+    const tasks = tasksText
+      .trim()
+      .split("\n")
+      .map((line, index) => {
+        const [title, completedStr, dueDate, priority] = line.split(",")
+        const completed = completedStr.trim() === "true"
+        return {
+          id: index.toString(),
+          title,
+          completed,
+          dueDate: dueDate || "未设置",
+          priority: priority || "未设置"
+        }
+      })
+    return tasks.filter((task) => !task.completed)
   },
-  exitHome(event)  {
-    if(event.direction == 'right'){
-      this.$app.exit();
+  exitHome(event) {
+    if (event.direction == "right") {
+      this.$app.exit()
     }
   },
   loadQuotations() {
@@ -79,42 +88,47 @@ export default {
     })
   },
   parseQuotations(quotationtxt) {
-    const quotations = quotationtxt.trim().split('\n').map((line, index) => {
-      const [quotation, author] = line.split(',')
-      return { id: index.toString(), quotation, author }
-    })
+    const quotations = quotationtxt
+      .trim()
+      .split("\n")
+      .map((line, index) => {
+        const [quotation, author] = line.split(",")
+        return {id: index.toString(), quotation, author}
+      })
     return quotations
   },
   getRandomQuotation() {
     if (this.quotations.length === 0) {
-      return ''
+      return ""
     }
     const randomIndex = Math.floor(Math.random() * this.quotations.length)
     const selectedQuotation = this.quotations[randomIndex]
-    this.randomQuotation =  `${selectedQuotation.quotation} - ${selectedQuotation.author}`
+    this.randomQuotation = `${selectedQuotation.quotation} - ${selectedQuotation.author}`
   },
   toPage(event) {
-    if(event.direction == 'right'){
+    if (event.direction == "right") {
       router.push({
-        uri:'/pages/analyse'
+        uri: "/pages/analyse"
       })
-    }else if(event.direction == 'left'){
+    } else if (event.direction == "left") {
       router.push({
-        uri:'/pages/target'
+        uri: "/pages/target"
       })
     }
   },
   showTaskDetail(taskId) {
     router.push({
-      uri: 'pages/detail',
+      uri: "pages/detail",
       params: {
         taskId: taskId
       }
-    });
+    })
   },
-  toSetting(){
+  toSetting() {
+    console.log("发送tasks:" + this.tasks)
     router.push({
-      uri: 'pages/setting'   
+      uri: "pages/setting",
+      params: {tasks: this.tasks}
     })
   }
 }
@@ -127,9 +141,9 @@ export default {
   padding: 16px;
 }
 
-.head{
+.head {
   flex-direction: column;
-  align-items: center; 
+  align-items: center;
 }
 
 .title {
@@ -139,33 +153,6 @@ export default {
   margin-bottom: 16px;
 }
 
-.pic-btn{
-  margin-left: auto;
-}
-
-.btn-add {
-  width: 200px;
-  height: 40px;
-  border-radius: 5px;
-  background-color: #09ba07;
-  font-size: 20px;
-  color: #ffffff;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.task-list {
-  width: 100%;
-}
-
-.task-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
 .task-title {
   font-size: 54px;
   text-align: center;
@@ -173,40 +160,27 @@ export default {
   text-overflow: ellipsis;
 }
 
-.btn-delete {
-  width: 445px; /* 调整按钮宽度 */
-  height: 120%;
-  border-radius: 24px;
-  background-color: #5d5959;
-  font-size: 18px;
-  color: #ffffff;
-  text-align: center;
-  line-height: 137px; /* 与 list-item 的高度相同 */
-  position: absolute;
-  right:-445px;
-  transition: right 0.3s ease; /* 添加动画效果 */
-}
-
 .item {
-  height:151px;
+  height: 151px;
   width: 100%;
   align-items: center;
   justify-content: center;
   background-color: #3d3d3d;
   border-radius: 42px;
-  margin-bottom: 10px; /* 添加下边距使任务之间有间隔 */
-  padding: 10px; /* 添加填充使内容与边界有间隔 */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 添加阴影效果 */
+  margin-bottom: 10px;
+  /* 添加下边距使任务之间有间隔 */
+  padding: 10px;
+  /* 添加填充使内容与边界有间隔 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  /* 添加阴影效果 */
 }
 
-
-  .list {
-    width: 100%;
-    height: 74%;
-    border: 0;
-  }
+.list {
+  width: 100%;
+  height: 74%;
+  border: 0;
+}
 
 .marquee {
   margin-bottom: 34px;
-}
-</style>
+}</style>

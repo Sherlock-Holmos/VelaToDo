@@ -1,174 +1,288 @@
 <template>
-  <div class="demo-page" @swipe="exitHome">
-    <text class="title">待办事项</text>
-    <marquee class="marquee" id="marquee" scrollamount={{81}} loop={{-1}}>
-      最好的投资就是投资自己|雷布斯
-    </marquee>
-    <list class="list" bounces="true">
-    <list-item for="{{tasks}}" class="item" type="item">
-      <text class="task-title">{{$item.title}}</text>
-      <input class="checkbox" type="checkbox" checked="{{$item.completed}}" data-id="{{$item.id}}" />
-    </list-item>
-  </list>
+  <div class="demo-page">
+    <text class="title" @swipe="toPage">{{ title }}</text>
+    <div class="button-row">
+      <input type="button" class="init-button" @click="readmessage" value="读取"></input>
+      <input type="button" class="init-button" @click="readTasks" value="JSON"></input>
+    </div>
+    <list class="task-list" for="{{tasks}}">
+      <list-item type="default" class="task-item" key="{{item.id}}">
+        <div class="task-info">
+          <text class="task-title">{{item.title}}</text>
+          <text class="task-description">{{item.description}}</text>
+        </div>
+        <switch class="task-completed" checked="{{item.completed}}" onchange="toggleCompleted($idx)"/>
+      </list-item>
+    </list>
+    <text class="status">{{ message }}</text> <!-- 读取发送的信息 -->
+    <text class="status">{{ status }}</text> <!-- 连接状态显示 -->
+    <text class="status">{{ sendStatus }}</text> <!-- 新增的连接状态显示 -->
   </div>
 </template>
 
 <script>
-import router from '@system.router'
-import file from '@system.file'
+import router from '@system.router';
+import file from '@system.file';
+import interconnect from '@system.interconnect';
 
-const TASKS_FILE_URI = '/common/File/ToDo.txt'
+const dstURI1 = 'internal://files/res/ToDo.txt';
+const resURI1 = '/common/File/ToDo.txt';
+const dstURI2 = 'internal://files/res/jie.txt';
+const resURI2 = '/common/File/jie.txt';
+const dstURI3 = 'internal://files/res/gui.txt';
+const resURI3 = '/common/File/gui.txt';
+const dstURI4 = 'internal://files/res/quotationFile.txt';
+const resURI4 = '/common/File/quotationFile.txt';
+
+const tempFILE = 'internal://files/temp.txt';
+const FILE = '/Common/File/Todo.json';
 
 export default {
   private: {
-    title: '待办事项',
-    tasks: []
+    title: '测试',
+    infor1: '',
+    infor2: '',
+    infor3: '',
+    infor4: '',
+    message: '未读取到信息', // 新增的连接状态字段
+    conn: null,
+    status: '未连接',
+    sendStatus:'未发送',
+    tasks: [],
   },
+  initResources(dstURI, resURI, infor) {
+    // 列出文件
+    file.list({
+      uri: 'internal://files/',
+      success: function(data) {
+        console.log(data.fileList);
+      },
+      fail: function(data, code) {
+        console.log(`handling fail, code = ${code}`);
+      }
+    });
+    console.log('检查路径');
 
-  onInit() {
-    this.loadTasks()
+    // 检查路径是否存在
+    file.access({
+      uri: dstURI,
+      success: function(data) {
+        console.log('目标路径已存在');
+      },
+      fail: function(data, code) {
+        if (code === 301) {
+          console.log('路径不存在，创建路径');
+          // 创建目录
+          file.mkdir({
+            uri: 'internal://files/res',
+            recursive: true,
+            success: function(data) {
+              console.log('目录创建成功');
+              // 创建文件
+              file.writeText({
+                uri: dstURI,
+                text: '',
+                success: function() {
+                  console.log('文件创建成功');
+                  //复制文件内容
+                  file.readText({
+                    uri: resURI,
+                    success: (data) => {
+                      if (data.text) {
+                        infor = data.text;
+                        console.log('取得数据:' + infor);
+                        file.writeText({
+                          uri: dstURI,
+                          text: infor,
+                          success: function() {
+                            console.log('复制成功' + dstURI);
+                          },
+                          fail: function(data, code) {
+                            console.log(`复制失败, code = ${code}`);
+                          }
+                        });
+                      }
+                    },
+                    fail: (data, code) => {
+                      console.error(`读取失败: ${code}`);
+                    }
+                  });
+                },
+                fail: function(data, code) {
+                  console.log(`文件创建失败，code = ${code}`);
+                }
+              });
+            },
+            fail: function(data, code) {
+              console.log(`目录创建失败，code = ${code}`);
+            }
+          });
+        } else {
+          console.log(`handling fail, code = ${code}`);
+        }
+      }
+    });
   },
-  loadTasks() {
+  initResourcesAll() {
+    this.initResources(dstURI1, resURI1, this.infor1);
+    this.initResources(dstURI2, resURI2, this.infor2);
+    this.initResources(dstURI3, resURI3, this.infor3);
+    this.initResources(dstURI4, resURI4, this.infor4);
+  },
+  read(dstURI) {
     file.readText({
-      uri: TASKS_FILE_URI,
+      uri: dstURI,
+      success: function(data) {
+        console.log(dstURI + data.text);
+      },
+      fail: function(data, code) {
+        console.log(`handling fail, code = ${code}`);
+      }
+    });
+  },
+  readAll() {
+    this.read(dstURI1);
+    this.read(dstURI2);
+    this.read(dstURI3);
+    this.read(dstURI4);
+  },
+  cpy(dstURI, resURI, infor) {
+    //复制文件内容
+    file.readText({
+      uri: resURI,
       success: (data) => {
         if (data.text) {
-          this.fileContent = data.text // 设置文件内容到绑定变量
-          this.tasks = this.parseTasks(data.text)
+          infor = data.text;
+          console.log('取得数据:' + infor);
+          file.writeText({
+            uri: dstURI,
+            text: infor,
+            success: function() {
+              console.log('复制成功' + dstURI);
+            },
+            fail: function(data, code) {
+              console.log(`复制失败, code = ${code}`);
+            }
+          });
         }
       },
       fail: (data, code) => {
-        console.error(`Failed to load tasks: ${code}`)
+        console.error(`读取失败: ${code}`);
+      }
+    });
+  },
+  recovery() {
+    this.cpy(dstURI1, resURI1, this.infor1);
+    this.cpy(dstURI2, resURI2, this.infor2);
+    this.cpy(dstURI3, resURI3, this.infor3);
+    this.cpy(dstURI4, resURI4, this.infor4);
+  },
+  connect() {
+    let conn = interconnect.instance();
+
+    console.log('接收tasks:' + this.tasks);
+
+    conn.send({
+      data: this.tasks,
+      success: ()=>{
+        console.log(`handling success`)
+        this.sendStatus = '发送成功'
+      },
+      fail: (data)=> {
+        console.log(`handling fail, errMsg = ${data.data}, errCode = ${data.code}`)
+        this.sendStatus = '发送失败'
       }
     })
   },
-  routeToAddTask() {
-    router.push({
-      uri: '/pages/addTask'
+  readmessage() {
+    conn = interconnect.instance()
+
+    conn.getReadyState({
+      success: data => {
+        if (data.status === 1) {
+          this.status = '连接成功'
+        } else if (data.status === 2) {
+          this.status = '连接失败'
+        }
+      },
+      fail: (data, code) => {
+        console.log(`handling fail, code = ${code}`)
+        this.status = '错误'
+      }
     })
-  },
-  deleteTask(event) {
-    const taskId = event.target.attr['data-id']
-    this.tasks = this.tasks.filter(task => task.id !== taskId)
-    this.saveTasks()
-  },
-  saveTasks() {
-    const tasksText = this.tasks.map(task => `${task.title},${task.completed}`).join('\n')
-    file.writeText({
-      uri: TASKS_FILE_URI,
-      text: tasksText
-    })
-  },
-  parseTasks(tasksText) {
-    const tasks = tasksText.trim().split('\n').map((line, index) => {
-      const [title, completedStr] = line.split(',')
-      const completed = completedStr === 'true'
-      return { id: index.toString(), title, completed }
-    })
-    return tasks
-  },
-  exitHome(event)  {
-    if(event.direction == 'right'){
-      this.$app.exit();      
+
+    conn.onmessage = (data) => {
+      this.message = data.data
     }
-  }
+
+    conn.onopen = () => {
+      console.log(`connection opened`)
+    }
+
+    conn.onclose = (data) => {
+      console.log(`connection closed, reason = ${data.data}, code = ${data.code}`)
+    }
+
+    conn.onerror = (data)=> {
+      console.log(`connection error, errMsg = ${data.data}, errCode = ${data.code}`)
+    }
+  },
+  readTasks() {
+    file.readText({
+      uri: resURI1,
+      success:(data) => {
+        this.tasks = data
+        console.log('tasks:' + data);
+        console.log('tasks.txt:' + data.txt);
+      },
+      fail:(data, code) => {
+          console.log('Failed to read tasks:', code);
+      }
+    });
 }
+};
 </script>
 
 <style>
 .demo-page {
   flex-direction: column;
+  justify-content: center;
   align-items: center;
-  padding: 16px;
 }
 
 .title {
+  bottom: 0;
   font-size: 48px;
   font-weight: bold;
   text-align: center;
   margin-bottom: 16px;
 }
 
-.btn-add {
-  width: 200px;
-  height: 40px;
-  border-radius: 5px;
-  background-color: #09ba07;
-  font-size: 20px;
-  color: #ffffff;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.task-list {
-  width: 100%;
-}
-
-.task-item {
+.button-row {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.task-title {
-  font-size: 54px;
-}
-
-.btn-delete {
-  width: 60px;
-  height: 30px;
-  border-radius: 5px;
-  background-color: #e74c3c;
-  font-size: 14px;
-  color: #ffffff;
-  text-align: center;
-}
-
-.item {
-  height:137px;
   width: 100%;
-  align-items: center;
-  justify-content: center;
-  background-color: #3d3d3d;
-  border-radius: 24px;
-  margin-bottom: 10px; /* 添加下边距使任务之间有间隔 */
-  padding: 10px; /* 添加填充使内容与边界有间隔 */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 添加阴影效果 */
+  padding: 20px 0;
 }
 
-
-  .list {
-    width: 100%;
-    height: 100%;
-    border: none;
-  }
-
-  .checkbox {
-  width: 20px;
-  height: 20px;
-  margin-right: 10px;
-  border-radius: 5px;
-  border: 2px solid #b9bab9;
-  background-color: #222222;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.init-button {
+  width: 200px;
+  height: 100px;
+  background-color: #5d6064;
+  color: white;
+  text-align: center;
+  line-height: 100px;
+  font-size: 48px;
+  border-radius: 16px;
+  margin: 0 10px;
+  /* Adds space between the buttons */
 }
 
-.checkbox:checked {
-  background-color: #7c7e7c;
-}
-
-.checkbox:checked::after {
-  content: '✓';
-  color: #fff;
-  font-size: 16px;
-}
-
-.marquee {
-  margin-bottom: 36px;
+.status {
+  font-size: 36px;
+  margin-top: 20px;
+  text-align: center;
+  color: #ff0000;
 }
 </style>

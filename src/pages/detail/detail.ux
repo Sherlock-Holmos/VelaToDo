@@ -1,99 +1,107 @@
 <template>
   <div class="demo-page" @swipe="back">
     <div>
-    <text class="detail">{{ task.title }}</text>
+      <text class="detail">{{ task.title }}</text>
     </div>
     <div>
-    <text class="lbl-date">截止日期：</text>   
-    <text class="date">{{ task.dueDate }}</text>   
+      <text>截止日期：</text>
+      <text class="date">{{ task.dueDate }}</text>
     </div>
     <div>
-     <text class="lbl-priority">重要程度：</text>
-     <text class="priority">{{ task.priority }}</text>
+      <text>重要程度：</text>
+      <text class="priority">{{ task.priority }}</text>
     </div>
-    <input type="button" class="btn-complete" @click="completeTask" value="√"/>
-    <input type="button" class="btn-delete" @click="deleteTask" value="X"/>
+    <input type="button" class="btn-complete" @click="completeTask" value="√" />
+    <input type="button" class="btn-delete" @click="deleteTask" value="X" />
   </div>
 </template>
 
-
 <script>
-import router from '@system.router'
-import file from '@system.file'
+import router from "@system.router"
+import file from "@system.file"
 
-const TASKS_FILE_URI = 'internal://files/res/ToDo.txt'
+const TASKS_FILE_URI = "internal://files/res/ToDo.txt"
 
 export default {
   protected: {
-    title: '详情',
+    title: "详情",
     tasks: [],
-    task: {},
+    task: {}
   },
 
   onInit() {
-    this.loadTasks(this.taskId);
+    this.loadTasks(this.taskId)
   },
-
   completeTask() {
-    console.log('task:' + this.task.title);
-    this.task.completed = true;
-    this.saveTasks();
-    this.return();
+    console.log("task:" + this.task.title)
+    this.task.completed = true
+    this.saveTasks()
+    this.return()
   },
   deleteTask() {
-    const taskId = this.task.id;
-    this.tasks = this.tasks.filter(task => task.id !== taskId);
-    this.saveTasks();
-    this.return();
+    const taskId = this.task.id
+    this.tasks = this.tasks.filter((task) => task.id !== taskId)
+    this.saveTasks()
+    this.return()
   },
   loadTasks(taskId) {
     file.readText({
       uri: TASKS_FILE_URI,
       success: (data) => {
         if (data.text) {
-          this.tasks = this.parseTasks(data.text);
-          this.task = this.tasks.find(task => task.id === taskId);
+          this.tasks = this.parseTasks(data.text)
+          this.task = this.tasks.find((task) => task.id === taskId)
         }
       },
       fail: (data, code) => {
-        console.error(`加载tasks失败: ${code}`);
+        console.error(`加载tasks失败: ${code}`)
       }
-    });
+    })
   },
   saveTasks() {
-    console.log('开始保存')
-    const tasksText = this.tasks.map(task => `${task.title},${task.completed}`).join('\n');
+    console.log("开始保存")
+    const tasksText = this.tasks
+      .map((task) => `${task.title},${task.completed},${task.dueDate},${task.priority}`)
+      .join("\n")
     file.writeText({
       uri: TASKS_FILE_URI,
       text: tasksText,
       success: () => {
-        console.log('成功保存tasks');
+        console.log("成功保存tasks")
       },
       fail: (data, code) => {
-        console.error(`保存tasks失败: ${code}`);
+        console.error(`保存tasks失败: ${code}`)
       }
-    });
+    })
   },
   parseTasks(tasksText) {
-    return tasksText.trim().split('\n').map((line, index) => {
-      const [title, completedStr, dueDate, priority] = line.split(',');
-      const completed = completedStr.trim() === 'true';
-      return { id: index.toString(), title, completed, dueDate: dueDate || '未设置', priority: priority || '未设置' };
-    });
+    return tasksText
+      .trim()
+      .split("\n")
+      .map((line, index) => {
+        const [title, completedStr, dueDate, priority] = line.split(",")
+        const completed = completedStr.trim() === "true"
+        return {
+          id: index.toString(),
+          title,
+          completed,
+          dueDate: dueDate || "未设置",
+          priority: priority || "未设置"
+        }
+      })
   },
   back(event) {
-    if (event.direction == 'right'||event.direction == 'left') {
-      router.back();
+    if (event.direction == "right" || event.direction == "left") {
+      router.back()
     }
   },
-  return(){
+  return() {
     router.push({
-      uri: '/pages/home'
-    });
-    router.clear();
+      uri: "/pages/home"
+    })
+    router.clear()
   }
 }
-
 </script>
 
 <style>
@@ -117,13 +125,15 @@ export default {
   margin-bottom: 10px;
 }
 
-.date, .priority {
+.date,
+.priority {
   font-size: 48px;
   text-align: center;
   margin-bottom: 10px;
 }
 
-.btn-complete, .btn-delete {
+.btn-complete,
+.btn-delete {
   margin-top: 16px;
   margin-bottom: 16px;
   width: 360px;
@@ -134,7 +144,6 @@ export default {
 }
 
 .btn-complete {
-
   background-color: #7d7d7d82;
   color: #ffffff;
 }
