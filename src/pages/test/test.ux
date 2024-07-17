@@ -35,7 +35,7 @@ const dstURI4 = 'internal://files/res/quotationFile.txt';
 const resURI4 = '/common/File/quotationFile.txt';
 
 const tempFILE = 'internal://files/temp.txt';
-const FILE = '/Common/File/Todo.json';
+const FILE = '/common/File/quotes.json';
 
 export default {
   private: {
@@ -229,13 +229,13 @@ export default {
   },
   readTasks() {
     file.readText({
-      uri: resURI1,
+      uri: FILE,
       success:(data) => {
-        this.tasks = data
+        this.tasks = JSON.parse(data.text)
         console.log('tasks:' + data);
         console.log('tasks.txt:' + data.txt);
       },
-      fail:(data, code) => {
+      fail:(data, code) => {  
           console.log('Failed to read tasks:', code);
       }
     });
